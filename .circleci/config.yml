@@ -1,33 +1,33 @@
 version: 2.1
-
 orbs:
-  win: circleci/windows@2.2.0
   azure-cli: circleci/azure-cli@1.2.0
-executors:
-  docker-publisher:
-    docker:
-      - image: circleci/buildpack-deps:stretch
-commands:
-  buildimage:
-    description: Build a Docker Image and Archive it
-    parameters:
-      displayname:
-        type: string
-      dockerfile:
-        type: string
-      imagename:
-        type: string
-      filename:
-        type: string
+  windows: circleci/windows@2.2.0
+jobs:
+  build:
+    description: Build application with Release configuration
+    executor:
+      name: windows/default
     steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - dotnet-packages-v1-{{ checksum "CQRS.API.csproj" }}
       - run:
-          name: Build << parameters.displayname >> Image
-          command: docker build . -f << parameters.dockerfile >> -t << parameters.imagename >>:latest --build-arg version=1.1.<< pipeline.number >>
+          name: "Install project dependencies"
+          command: dotnet.exe restore
       - run:
-          name: Archive << parameters.imagename >> Image
-          command: docker save -o << parameters.filename >>.tar << parameters.imagename >>
+          name: "Build Application according to some given configuration"
+          command: dotnet.exe build --configuration Release
+      - run:
+          name: "Publish to a subfolder"
+          command: |
+            dotnet.exe publish --configuration Release --output WebAPIFolder
       - persist_to_workspace:
-          root: .
+          root: ~/project
           paths:
-            - ./<< parameters.filename >>.tar
-  
+            - WebAPIFolder
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - build
