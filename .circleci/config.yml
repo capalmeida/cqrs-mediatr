@@ -1,6 +1,6 @@
 version: 2.1
+
 orbs:
-  azure-cli: circleci/azure-cli@1.2.0
   windows: circleci/windows@2.2.0
 jobs:
   build:
@@ -9,25 +9,6 @@ jobs:
       name: windows/default
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - dotnet-packages-v1-{{ checksum "CQRS.API.csproj" }}
-      - run:
-          name: "Install project dependencies"
-          command: dotnet.exe restore
       - run:
           name: "Build Application according to some given configuration"
           command: dotnet.exe build --configuration Release
-      - run:
-          name: "Publish to a subfolder"
-          command: |
-            dotnet.exe publish --configuration Release --output WebAPIFolder
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - WebAPIFolder
-
-workflows:
-  build-and-deploy:
-    jobs:
-      - build
