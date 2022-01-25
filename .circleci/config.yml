@@ -1,0 +1,33 @@
+version: 2.1
+
+orbs:
+  win: circleci/windows@2.2.0
+  azure-cli: circleci/azure-cli@1.2.0
+executors:
+  docker-publisher:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+commands:
+  buildimage:
+    description: Build a Docker Image and Archive it
+    parameters:
+      displayname:
+        type: string
+      dockerfile:
+        type: string
+      imagename:
+        type: string
+      filename:
+        type: string
+    steps:
+      - run:
+          name: Build << parameters.displayname >> Image
+          command: docker build . -f << parameters.dockerfile >> -t << parameters.imagename >>:latest --build-arg version=1.1.<< pipeline.number >>
+      - run:
+          name: Archive << parameters.imagename >> Image
+          command: docker save -o << parameters.filename >>.tar << parameters.imagename >>
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./<< parameters.filename >>.tar
+  
